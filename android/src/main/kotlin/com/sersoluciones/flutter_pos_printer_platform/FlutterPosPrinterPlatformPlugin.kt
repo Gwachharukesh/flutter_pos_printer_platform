@@ -177,8 +177,8 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
         messageChannel = null
         messageUSBChannel = null
 
-       if (this::bluetoothService.isInitialized) bluetoothService.setHandler(null)
-        adapter.setHandler(null)
+        if (this::bluetoothService.isInitialized) bluetoothService.setHandler(null)
+        if (this::adapter.isInitialized) adapter.setHandler(null)
     }
 
     override fun onAttachedToActivity(binding: ActivityPluginBinding) {
@@ -227,7 +227,7 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
     override fun onDetachedFromActivityForConfigChanges() {
         Log.d(TAG, "onDetachedFromActivityForConfigChanges")
         currentActivity = null
-        bluetoothService.setActivity(null)
+        if (this::bluetoothService.isInitialized) bluetoothService.setActivity(null)
     }
 
     override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
@@ -235,13 +235,13 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
         currentActivity = binding.activity
         binding.addRequestPermissionsResultListener(this)
         binding.addActivityResultListener(this)
-        bluetoothService.setActivity(currentActivity)
+        if (this::bluetoothService.isInitialized) bluetoothService.setActivity(currentActivity)
     }
 
     override fun onDetachedFromActivity() {
         Log.d(TAG, "onDetachedFromActivity")
         currentActivity = null
-        bluetoothService.setActivity(null)
+        if (this::bluetoothService.isInitialized) bluetoothService.setActivity(null)
     }
 
     override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
@@ -347,7 +347,8 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
             if (!this::bluetoothService.isInitialized){
                 bluetoothService = BluetoothService.getInstance(bluetoothHandler)
             }
-            if (!bluetoothService.mBluetoothAdapter.isEnabled) {
+            if (!bluetoothService.isBluetoothSupported) return false
+            if (bluetoothService.mBluetoothAdapter?.isEnabled != true) {
                 if (requestPermissionBT) return false
                 val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
                 currentActivity?.let { startActivityForResult(it, enableBtIntent, PERMISSION_ENABLE_BLUETOOTH, null) }
@@ -359,6 +360,7 @@ class FlutterPosPrinterPlatformPlugin : FlutterPlugin, MethodCallHandler, Plugin
     }
 
     private fun getUSBDeviceList(result: Result) {
+        if (!this::adapter.isInitialized) { result.success(emptyList<Any>()); return }
         val list = ArrayList<HashMap<*, *>>()
         val usbDevices: List<UsbDevice> = adapter.deviceList
         for (usbDevice in usbDevices) {

@@ -23,12 +23,14 @@ class BluetoothService(private var bluetoothHandler: Handler?) {
     private var reconnectBluetooth = false
     private var result: Result? = null
 
-    val mBluetoothAdapter: BluetoothAdapter by lazy {
+    val mBluetoothAdapter: BluetoothAdapter? by lazy {
         BluetoothAdapter.getDefaultAdapter()
     }
 
+    val isBluetoothSupported: Boolean get() = mBluetoothAdapter != null
+
     private val bleScanner by lazy {
-        mBluetoothAdapter.bluetoothLeScanner
+        mBluetoothAdapter?.bluetoothLeScanner
     }
     private var devicesBle: MutableList<LocalBluetoothDevice> = mutableListOf()
 
@@ -47,7 +49,7 @@ class BluetoothService(private var bluetoothHandler: Handler?) {
         val list = ArrayList<HashMap<*, *>>()
         bluetoothHandler?.obtainMessage(BluetoothConstants.MESSAGE_START_SCANNING, -1, -1)
             ?.sendToTarget()
-        val pairedDevices: Set<BluetoothDevice>? = mBluetoothAdapter.bondedDevices
+        val pairedDevices: Set<BluetoothDevice>? = mBluetoothAdapter?.bondedDevices
         pairedDevices?.forEach { device ->
             val deviceName =
                 if (device.name == null) device.address else device.name
@@ -215,10 +217,11 @@ class BluetoothService(private var bluetoothHandler: Handler?) {
     @Suppress("unused")
     private fun setUpBluetooth() {
 
-        if (!mBluetoothAdapter.isEnabled) {
-            mBluetoothAdapter.enable()
+        if (mBluetoothAdapter == null) return
+        if (!mBluetoothAdapter!!.isEnabled) {
+            mBluetoothAdapter!!.enable()
             while (true) {
-                if (mBluetoothAdapter.isEnabled) break
+                if (mBluetoothAdapter!!.isEnabled) break
             }
             return
         }
