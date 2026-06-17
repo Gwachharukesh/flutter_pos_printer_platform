@@ -74,7 +74,7 @@ class BluetoothService(private var bluetoothHandler: Handler?) {
     // Scan ble
     ////////////////////////////////////////////////////////////////////////////////////////////////
     fun scanBleDevice(mChannel: MethodChannel) {
-        if (bleScanner == null) return
+        val scanner = bleScanner ?: return
         devicesBle.clear()
         handler.removeCallbacksAndMessages(null)
         // Device scan callback.
@@ -85,7 +85,7 @@ class BluetoothService(private var bluetoothHandler: Handler?) {
         if (!scanning) { // Stops scanning after a pre-defined scan period.
             handler.postDelayed({
                 scanning = false
-                bleScanner.stopScan(leScanCallback)
+                scanner.stopScan(leScanCallback)
                 bluetoothHandler?.obtainMessage(BluetoothConstants.MESSAGE_STOP_SCANNING, -1, -1)
                     ?.sendToTarget()
                 Log.d(TAG, "----- stop scanning ble ------- ")
@@ -98,12 +98,12 @@ class BluetoothService(private var bluetoothHandler: Handler?) {
             }, SCAN_PERIOD)
             Log.d(TAG, "----- start scanning ble ------ ")
             scanning = true
-            bleScanner.startScan(leScanCallback)
+            scanner.startScan(leScanCallback)
             bluetoothHandler?.obtainMessage(BluetoothConstants.MESSAGE_START_SCANNING, -1, -1)
                 ?.sendToTarget()
         } else {
             scanning = false
-            bleScanner.stopScan(leScanCallback)
+            scanner.stopScan(leScanCallback)
             bluetoothHandler?.obtainMessage(BluetoothConstants.MESSAGE_STOP_SCANNING, -1, -1)
                 ?.sendToTarget()
         }
